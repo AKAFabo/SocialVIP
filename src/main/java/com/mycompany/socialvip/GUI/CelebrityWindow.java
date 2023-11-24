@@ -199,6 +199,8 @@ public class CelebrityWindow extends javax.swing.JFrame {
     
     private final static int NEW_POST = 2;
     private final static int NEW_CELEBRITY = 1;
+    private final static int REACHED_LIKES = 3;
+    private final static int REACHED_FOLLOWERS = 4;
     
     private static ObjectOutputStream output;
     private static ObjectInputStream input;

@@ -26,6 +26,10 @@ public class Server {
     
     private final static int NEW_CELEBRITY = 1;
     private final static int NEW_POST = 2;
+    private final static int REACHED_LIKES = 3;
+    private final static int REACHED_FOLLOWERS = 4;
+    private final static int LIKE_RECEIVED = 5;
+    private final static int FOLLOW_RECEIVED = 6;
     
     public Server(int port) {
         try {
@@ -77,12 +81,34 @@ public class Server {
                             Celebrity celebrity = (Celebrity)inputStream.readObject();
                             registerCelebrity(celebrity);
                         }
-                        case (NEW_POST) -> {
-                            
+                        case (NEW_POST) -> {                           
                             String message = inputStream.readUTF();
                             Celebrity celebrity = (Celebrity)inputStream.readObject();                            
                             sendNewPost(message, celebrity);                                                                                
-                        }                       
+                        }  
+                        case (REACHED_LIKES) ->{
+                            int likes = inputStream.readInt();
+                            String celeb = inputStream.readUTF();
+                            likesGoalReached(likes, celeb);
+                        }
+                        
+                        case (REACHED_FOLLOWERS) -> {
+                            int followers = inputStream.readInt();
+                            String celeb = inputStream.readUTF();
+                            followersGoalReached(followers, celeb);
+                        }
+                        case (LIKE_RECEIVED) -> {
+                            int likes = inputStream.readInt();
+                            String fullMSG = inputStream.readUTF();
+                            String oldMSG = inputStream.readUTF();
+                            Celebrity celeb = (Celebrity)inputStream.readObject();
+                            registerLike(likes, fullMSG, oldMSG, celeb);
+                        }
+                        case (FOLLOW_RECEIVED) -> {
+                            int followers = inputStream.readInt();
+                            Celebrity celeb = (Celebrity)inputStream.readObject();                           
+                            registerFollow(followers, celeb);
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -120,6 +146,60 @@ public class Server {
             }
         }
         
+    }
+    
+    public static void likesGoalReached(int likes, String celebName){
+        for (ObjectOutputStream client : clients) {
+            try {
+                client.writeInt(REACHED_LIKES);
+                client.writeInt(likes);
+                client.writeUTF(celebName);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public static void followersGoalReached(int follower, String celebName){
+        for (ObjectOutputStream client : clients) {
+            try {
+                client.writeInt(REACHED_FOLLOWERS);
+                client.writeInt(follower);
+                client.writeUTF(celebName);
+                client.flush();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public static void registerLike(int likes, String fullMSG, String oldMSG, Celebrity celeb){
+        
+        for (ObjectOutputStream client : clients) {
+            try {
+                client.writeInt(LIKE_RECEIVED);
+                client.writeInt(likes);
+                client.writeUTF(fullMSG);
+                client.writeUTF(oldMSG);
+                client.writeObject(celeb);
+                client.flush();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public static void registerFollow(int follows, Celebrity celeb){
+        for (ObjectOutputStream client : clients) {
+            try {
+                client.writeInt(FOLLOW_RECEIVED);
+                client.writeInt(follows);
+                client.writeObject(celeb);
+                client.flush();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
     }
     
 }

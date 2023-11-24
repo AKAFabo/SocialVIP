@@ -1,8 +1,10 @@
+com\mycompany\socialvip\Obs\Observer.class
 com\mycompany\socialvip\GUI\FanWindow$1.class
 com\mycompany\socialvip\GUI\CelebrityWindow.class
 com\mycompany\socialvip\GUI\Server.class
 com\mycompany\socialvip\GUI\CelebrityWindow$ClientHandler.class
 com\mycompany\socialvip\GUI\CelebrityWindow$2.class
+com\mycompany\socialvip\Obs\Observable.class
 com\mycompany\socialvip\GUI\FanWindow$ClientHandler$1.class
 com\mycompany\socialvip\Celebrity.class
 com\mycompany\socialvip\GUI\FanWindow$ClientHandler.class

@@ -6,6 +6,7 @@ package com.mycompany.socialvip.GUI;
 
 import com.mycompany.socialvip.Celebrity;
 import com.mycompany.socialvip.Fan;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -195,22 +196,51 @@ public class FanWindow extends javax.swing.JFrame {
                             celebrityBox.addActionListener(new ActionListener() {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                    
-                                    if (celebrityBox.getClientProperty("Followed").equals("False")){
-                                        int option = JOptionPane.showConfirmDialog(null, "Follow this celebrity?", "Confirmation",
-                                                JOptionPane.YES_NO_OPTION);
-                                       if (option == JOptionPane.YES_OPTION){
-                                        celebrityBox.putClientProperty("Followed", "True");
-                                        followingList.add(celeb);
-                                       }
-                                    } else {
-                                        int option = JOptionPane.showConfirmDialog(null, "Unfollow this celebrity?", "Confirmation",
-                                                JOptionPane.YES_NO_OPTION);      
-                                        if (option == JOptionPane.YES_OPTION){
-                                            celebrityBox.putClientProperty("Followed", "False");
-                                            followingList.remove(celeb);
+                                    try {
+                                        int currentFollowers = (int) celebrityBox.getClientProperty("Followers");
+                                        UIManager.put("OptionPane.yesButtonText", "Yes");
+                                        UIManager.put("OptionPane.noButtonText", "No");
+                                        
+                                        if (celebrityBox.getClientProperty("Followed").equals("False")){
+                                            int option = JOptionPane.showConfirmDialog(null, "Follow this celebrity?", "Confirmation",
+                                                    JOptionPane.YES_NO_OPTION);
+                                            
+                                            if (option == JOptionPane.YES_OPTION){
+                                                celebrityBox.putClientProperty("Followed", "True");
+                                                followingList.add(celeb);
+                                                currentFollowers++;
+                                                
+                                            }
+                                        } else {
+                                            int option = JOptionPane.showConfirmDialog(null, "Unfollow this celebrity?", "Confirmation",
+                                                    JOptionPane.YES_NO_OPTION);
+                                            if (option == JOptionPane.YES_OPTION){
+                                                celebrityBox.putClientProperty("Followed", "False");
+                                                followingList.remove(celeb);
+                                                currentFollowers--;
+                                            }
                                         }
+                                        celebrityBox.putClientProperty("Followers", currentFollowers);
+                                        
+                                        output.writeInt(FOLLOW_RECEIVED);
+                                        output.writeInt((int) celebrityBox.getClientProperty("Followers"));
+                                        output.writeObject(celeb);
+                                        output.flush();
+                                        
+                                        if (currentFollowers % 10 == 0){
+                                            try {
+                                                output.writeInt(REACHED_FOLLOWERS);
+                                                output.writeInt(currentFollowers);
+                                                output.writeUTF(celeb.getName());
+                                            } catch (IOException ex){
+                                                Logger.getLogger(FanWindow.class.getName()).log(Level.SEVERE, null, ex);
+                                                
+                                            }
+                                        }
+                                    } catch (IOException ex) {
+                                        Logger.getLogger(FanWindow.class.getName()).log(Level.SEVERE, null, ex);
                                     }
+                                    
                                 }                                                        
                             });
                         }
@@ -234,30 +264,107 @@ public class FanWindow extends javax.swing.JFrame {
                                     celebMessage.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
-                                            UIManager.put("OptionPane.yesButtonText", "Like");
-                                            UIManager.put("OptionPane.noButtonText", "Dislike");
-                                            
-                                            int option = JOptionPane.showConfirmDialog(null, "Like/Dislike this post",
-                                                    "Like", JOptionPane.YES_NO_OPTION);
-                                            
-                                            int currentLikes = (int) celebMessage.getClientProperty("Likes");
-                                            
-                                            if (option == JOptionPane.YES_OPTION){
-                                                celebMessage.setText(celeb.getName() + ": " + message + " " + ++currentLikes + " likes.");
+                                            try {
+                                                UIManager.put("OptionPane.yesButtonText", "Like");
+                                                UIManager.put("OptionPane.noButtonText", "Dislike");
+                                                
+                                                int option = JOptionPane.showConfirmDialog(null, "Like/Dislike this post",
+                                                        "Like", JOptionPane.YES_NO_OPTION);
+                                                
+                                                int currentLikes = (int) celebMessage.getClientProperty("Likes");
+                                                
+                                                if (option == JOptionPane.YES_OPTION){
+                                                    currentLikes++;                                                                                                  
+                                                } else {
+                                                    currentLikes--;
+                                                }
+                                                
                                                 celebMessage.putClientProperty("Likes", currentLikes);
-                                                celebMessagesPanel.revalidate();
-                                                celebMessagesPanel.repaint();
-                                            } else {
-                                                celebMessage.setText(celeb.getName() + ": " + message + " " + --currentLikes + " likes.");
-                                                celebMessage.putClientProperty("Likes", currentLikes);
-                                                celebMessagesPanel.revalidate();
-                                                celebMessagesPanel.repaint();
+                                                
+                                                output.writeInt(LIKE_RECEIVED);
+                                                output.writeInt((int) celebMessage.getClientProperty("Likes"));
+                                                output.writeUTF(celebMessage.getText());
+                                                output.writeUTF(message);
+                                                output.writeObject(celebrity);
+                                                output.flush();
+                                                
+                                                if (currentLikes % 10 == 0){
+                                                    try {
+                                                        output.writeInt(REACHED_LIKES);
+                                                        output.writeInt(currentLikes);
+                                                        output.writeUTF(celeb.getName());
+                                                    } catch (IOException ex) {
+                                                        Logger.getLogger(FanWindow.class.getName()).log(Level.SEVERE, null, ex);
+                                                    }
+                                                }
+                                            } catch (IOException ex) {
+                                                Logger.getLogger(FanWindow.class.getName()).log(Level.SEVERE, null, ex);
                                             }
                                         }
                                     });
                                     
+                                }                              
+                            }
+                        }
+                        case (LIKE_RECEIVED) -> {
+                            
+                            int likes = input.readInt();
+                            String msg = input.readUTF();
+                            String oldMsg = input.readUTF();
+                            Celebrity celeb = (Celebrity)input.readObject();
+                            System.out.println(likes);
+                            
+                            for (Component comp : celebMessagesPanel.getComponents()) {
+                                JButton post = (JButton) comp;
+                                String msgPost = post.getText();
+                                
+                                if (msg.equals(msgPost)){
+                                    post.setText(celeb.getName() + ": " + oldMsg + " " + likes + " likes.");
+                                    post.putClientProperty("Likes", likes);
+                                    celebMessagesPanel.revalidate();
+                                    celebMessagesPanel.repaint();
+                                    System.out.println("Mensaje recibido");
+                                    System.out.println("Texto actualizado de post: " + post.getText());
+                                    break;
                                 }
                             }
+                                                       
+                        }
+                        case (FOLLOW_RECEIVED) -> {
+                            
+                            int followers = input.readInt();
+                            Celebrity celeb = (Celebrity)input.readObject();
+                            
+                            for (Component comp : celebritiesToFollowPanel.getComponents()){
+                                JButton celebrity = (JButton) comp;
+                                
+                                if (celebrity.getText().equals(celeb.getName())){
+                                    celebrity.putClientProperty("Followers", followers);
+                                    break;
+                                }
+                            }
+                            
+                        }
+                        case (REACHED_LIKES) -> {
+                            int likes = input.readInt();
+                            String celebName = input.readUTF();
+                            
+                            for (Celebrity celeb : followingList) {
+                                if (celeb.getName().equals(celebName)){
+                                    checkLikesAmount(likes, celebName);
+                                }
+                            }
+                        }
+                        
+                        case (REACHED_FOLLOWERS) -> {
+                            int followers = input.readInt();
+                            String celebName = input.readUTF();
+                            for (Celebrity celeb : followingList) {
+                                if (celeb.getName().equals(celebName)){
+                                    checkFollowersAmount(followers, celebName);
+                                }
+                            }
+                            
                         }
                     }
                 }
@@ -269,6 +376,18 @@ public class FanWindow extends javax.swing.JFrame {
         }
     }
     
+    public static void checkLikesAmount(int likes, String celebName){       
+        if (likes % 10 == 0){
+            currentFan.sendNotification("LIKES", likes, celebName);
+        }       
+    }
+    
+    public static void checkFollowersAmount(int followers, String celebName){
+        if (followers % 10 == 0){
+           currentFan.sendNotification("FOLLOWERS", followers, celebName);
+        }
+    }
+    
     
     
     private static Fan currentFan = new Fan(" ");
@@ -277,6 +396,10 @@ public class FanWindow extends javax.swing.JFrame {
     
     private final static int NEW_CELEBRITY = 1;
     private final static int NEW_POST = 2;
+    private final static int REACHED_LIKES = 3;
+    private final static int REACHED_FOLLOWERS = 4;
+    private final static int LIKE_RECEIVED = 5;
+    private final static int FOLLOW_RECEIVED = 6;
     
     private ObjectOutputStream output;
     private ObjectInputStream input;

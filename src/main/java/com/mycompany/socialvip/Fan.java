@@ -4,13 +4,15 @@
  */
 package com.mycompany.socialvip;
 
+import com.mycompany.socialvip.Obs.Observer;
 import java.util.ArrayList;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author Fabo
  */
-public class Fan {
+public class Fan implements Observer{
     
     private String name;
     private ArrayList<Celebrity> following = new ArrayList<>();
@@ -34,6 +36,22 @@ public class Fan {
     public Fan(String name) {
         this.name = name;
     }
+
+
+    @Override
+    public void sendNotification(String notification, int amount, String celeb) {
+        
+        switch (notification){
+            
+            case ("LIKES") -> {
+                JOptionPane.showMessageDialog(null, celeb + " has reached " + amount + " likes", this.getName(), JOptionPane.INFORMATION_MESSAGE);                  
+            }
+            case ("FOLLOWERS") -> {
+                JOptionPane.showMessageDialog(null, celeb + " has reached " + amount + " followers", this.getName(), JOptionPane.INFORMATION_MESSAGE);
+            }
+        }       
+    }
+    
     
     
     

@@ -14,5 +14,5 @@ public class Main {
         System.out.println("Hello World!");
     }
     
-    //TODO -> Implement observer for likes & followers
+    //TODO -> Celebridad puede darse de baja
 }

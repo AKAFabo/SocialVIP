@@ -4,14 +4,16 @@
  */
 package com.mycompany.socialvip;
 
+import com.mycompany.socialvip.Obs.Observable;
 import java.io.Serializable;
 import java.util.ArrayList;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author Fabo
  */
-public class Celebrity implements Serializable{
+public class Celebrity implements Serializable, Observable{
     
     private String name;
     private int numberOfFollowers = 0;
@@ -44,7 +46,18 @@ public class Celebrity implements Serializable{
     public Celebrity(String name) {
         this.name = name;
     }
-    
-    
-    
+
+    @Override
+    public void sendNotificaton(String notification, int amount) {
+        
+        switch (notification){
+            
+            case ("LIKES") -> {
+                JOptionPane.showMessageDialog(null, this.getName() + " has reached " + amount + " likes");                  
+            }
+            case ("FOLLOWERS") -> {
+                JOptionPane.showMessageDialog(null, this.getName() + " has reached " + amount + " followers");
+            }
+        }       
+    }
 }
